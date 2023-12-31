@@ -1,0 +1,8 @@
+[DEFAULT]
+[MYSQL]
+HOST=google.com
+PORT=1433
+USER=root
+PASSWORD=password
+DATABASE_NAME=commands
+DATABASE_TABLE=orders
