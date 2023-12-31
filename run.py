@@ -19,11 +19,13 @@ def setup_db():
         "password": config.get("MYSQL", "PASSWORD"),
         "database": config.get("MYSQL", "DATABASE_NAME"),
     }
+
+    table_name = config.get("MYSQL", "DATABASE_TABLE")
     conn = mysql.connector.connect(**mysql_config)
     cursor = conn.cursor()
     cursor.execute(
-        """
-CREATE TABLE IF NOT EXISTS orders
+        f"""
+CREATE TABLE IF NOT EXISTS {table_name}
 (
     id BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
     source TEXT,
@@ -36,7 +38,7 @@ CREATE TABLE IF NOT EXISTS orders
                    """
     )
     conn.commit()
-    return conn, cursor
+    return conn, cursor, table_name
 
 
 # Local database of simple command names and their corresponding Windows CLI commands
@@ -51,10 +53,10 @@ def check_and_execute_command():
     command_to_run = None
     print("Checking for commands")
     try:
-        conn, cursor = setup_db()
+        conn, cursor, table_name = setup_db()
 
         # Query for commands where "used" = 0
-        cursor.execute("SELECT command_uuid FROM orders WHERE used = 0 LIMIT 1;")
+        cursor.execute(f"SELECT command_uuid FROM {table_name} WHERE used = 0 LIMIT 1;")
         commands = cursor.fetchall()
 
         for command in commands:
@@ -64,7 +66,7 @@ def check_and_execute_command():
 
             # Update the "used" flag to 1
             cursor.execute(
-                "UPDATE orders SET used = 1, used_at = CURRENT_TIMESTAMP WHERE command_uuid = %s;",
+                f"UPDATE {table_name} SET used = 1, used_at = CURRENT_TIMESTAMP WHERE command_uuid = %s;",
                 (command[0],),
             )
             conn.commit()
